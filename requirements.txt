@@ -1,4 +1,5 @@
 geopandas
+pyogrio
+pyarrow
 fiona
 pyproj
-pandas
