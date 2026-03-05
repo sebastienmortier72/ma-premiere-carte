@@ -1,27 +1,30 @@
-// On va chercher le fichier créé par le robot
-fetch('communes_test.geojson') 
+// CHANGE BIEN LE NOM ICI : on veut 'resultat.geojson' (le fichier créé par le robot)
+fetch('resultat.geojson') 
     .then(res => {
-        if (!res.ok) throw new Error("Le fichier resultat.geojson n'est pas encore prêt.");
+        if (!res.ok) throw new Error("Le fichier resultat.geojson n'est pas encore généré par le robot.");
         return res.json();
     })
     .then(data => {
         L.geoJSON(data, {
             style: {
-                color: "#2c3e50", // Couleur des bords
+                color: "#2c3e50", 
                 weight: 1,
-                fillColor: "#3498db", // Couleur de remplissage
+                fillColor: "#3498db", 
                 fillOpacity: 0.4
             },
             onEachFeature: function (feature, layer) {
-                // On affiche les infos contenues dans le GeoJSON
-                // Assure-toi que "nom" est bien le nom de la colonne dans ton fichier original
-                let nomCommune = feature.properties.NOM || feature.properties.nom_comm || "Inconnue";
+                // On vérifie si la colonne s'appelle NOM ou NOM_COMM
+                let nomCommune = feature.properties.NOM || feature.properties.NOM_COMM || feature.properties.nom || "Inconnue";
                 
+                // On utilise <br> pour que le retour à la ligne fonctionne dans la bulle
                 layer.bindPopup(
                     "<b>Commune :</b> " + nomCommune + 
-                    "<br><b>Status :</b> " + feature.properties.status_robot
+                    "<br><b>Status :</b> " + (feature.properties.status_robot || "En attente du robot...")
                 );
             }
         }).addTo(map);
     })
-    .catch(err => console.error("Erreur :", err));
+    .catch(err => {
+        console.error("Erreur :", err);
+        alert("Le fichier de données n'est pas trouvé. Vérifie que le robot a bien fini son travail (onglet Actions).");
+    });
