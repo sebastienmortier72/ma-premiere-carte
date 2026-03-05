@@ -1,11 +1,27 @@
-fetch('resultat.geojson') // On appelle le fichier généré
-    .then(res => res.json())
+// On va chercher le fichier créé par le robot
+fetch('resultat.geojson') 
+    .then(res => {
+        if (!res.ok) throw new Error("Le fichier resultat.geojson n'est pas encore prêt.");
+        return res.json();
+    })
     .then(data => {
         L.geoJSON(data, {
+            style: {
+                color: "#2c3e50", // Couleur des bords
+                weight: 1,
+                fillColor: "#3498db", // Couleur de remplissage
+                fillOpacity: 0.4
+            },
             onEachFeature: function (feature, layer) {
-                // On affiche le nom de la commune et l'info du robot
-                layer.bindPopup("Commune : " + feature.properties.nom + 
-                                "<br>Status : " + feature.properties.status_robot);
+                // On affiche les infos contenues dans le GeoJSON
+                // Assure-toi que "nom" est bien le nom de la colonne dans ton fichier original
+                let nomCommune = feature.properties.nom || feature.properties.nom_comm || "Inconnue";
+                
+                layer.bindPopup(
+                    "<b>Commune :</b> " + nomCommune + 
+                    "<br><b>Status :</b> " + feature.properties.status_robot
+                );
             }
         }).addTo(map);
-    });
+    })
+    .catch(err => console.error("Erreur :", err));
