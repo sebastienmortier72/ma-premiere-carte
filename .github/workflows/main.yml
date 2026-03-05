@@ -1,0 +1,11 @@
+fetch('resultat.geojson') // On appelle le fichier généré
+    .then(res => res.json())
+    .then(data => {
+        L.geoJSON(data, {
+            onEachFeature: function (feature, layer) {
+                // On affiche le nom de la commune et l'info du robot
+                layer.bindPopup("Commune : " + feature.properties.nom + 
+                                "<br>Status : " + feature.properties.status_robot);
+            }
+        }).addTo(map);
+    });
