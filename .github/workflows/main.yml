@@ -1,11 +1,32 @@
-fetch('resultat.geojson') // On appelle le fichier généré
-    .then(res => res.json())
-    .then(data => {
-        L.geoJSON(data, {
-            onEachFeature: function (feature, layer) {
-                // On affiche le nom de la commune et l'info du robot
-                layer.bindPopup("Commune : " + feature.properties.nom + 
-                                "<br>Status : " + feature.properties.status_robot);
-            }
-        }).addTo(map);
-    });
+name: Robot_SIG
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recuperer le code
+        uses: actions/checkout@v3
+
+      - name: Installer Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Installer les outils
+        run: |
+          pip install geopandas fiona pyproj
+
+      - name: Lancer le traitement
+        run: python traitement.py
+
+      - name: Sauvegarder le résultat
+        run: |
+          git config --global user.name 'Robot-SIG'
+          git config --global user.email 'robot@github.com'
+          git add resultat.geojson
+          git commit -m "Mise à jour automatique" || echo "Rien à changer"
+          git push
