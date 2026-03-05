@@ -1,5 +1,5 @@
 // On va chercher le fichier créé par le robot
-fetch('resultat.geojson') 
+fetch('communes_test.geojson') 
     .then(res => {
         if (!res.ok) throw new Error("Le fichier resultat.geojson n'est pas encore prêt.");
         return res.json();
@@ -15,7 +15,7 @@ fetch('resultat.geojson')
             onEachFeature: function (feature, layer) {
                 // On affiche les infos contenues dans le GeoJSON
                 // Assure-toi que "nom" est bien le nom de la colonne dans ton fichier original
-                let nomCommune = feature.properties.nom || feature.properties.nom_comm || "Inconnue";
+                let nomCommune = feature.properties.NOM || feature.properties.nom_comm || "Inconnue";
                 
                 layer.bindPopup(
                     "<b>Commune :</b> " + nomCommune + 
