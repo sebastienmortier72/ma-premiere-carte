@@ -1,8 +1,8 @@
 name: Robot_SIG
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  workflow_dispatch: # Permet de le lancer à la main si besoin
 
 jobs:
   build:
@@ -11,22 +11,21 @@ jobs:
       - name: Recuperer le code
         uses: actions/checkout@v3
 
-      - name: Installer Python
+      - name: Installer Python et les outils
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Installer les outils
-        run: |
-          pip install geopandas fiona pyproj
+      - name: Installation Express
+        run: pip install geopandas fiona pyproj
 
-      - name: Lancer le traitement
+      - name: Lancer le script
         run: python traitement.py
 
-      - name: Sauvegarder le résultat
+      - name: Sauvegarder sur GitHub
         run: |
           git config --global user.name 'Robot-SIG'
           git config --global user.email 'robot@github.com'
           git add resultat.geojson
-          git commit -m "Mise à jour automatique" || echo "Rien à changer"
+          git commit -m "MAJ Automatique par le robot" || echo "Rien à changer"
           git push
