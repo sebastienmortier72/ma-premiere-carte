@@ -1,32 +1,42 @@
-// 1. On va chercher le fichier GÉNÉRÉ par le robot
-fetch('resultat.geojson') 
-    .then(res => {
-        if (!res.ok) throw new Error("Le robot n'a pas encore créé le fichier resultat.geojson");
-        return res.json();
-    })
-    .then(data => {
-        L.geoJSON(data, {
-            style: {
-                color: "#2c3e50",
-                weight: 1,
-                fillColor: "#3498db",
-                fillOpacity: 0.4
-            },
-            onEachFeature: function (feature, layer) {
-                // On utilise ton champ 'NOM' (en majuscules comme dans ton fichier)
-                let nomCommune = feature.properties.NOM || "Nom inconnu";
-                
-                // On utilise 'status_robot' créé par le script Python
-                let infoRobot = feature.properties.status_robot || "En attente...";
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ma Carte des Communes</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map { height: 600px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
 
-                // Affichage dans la bulle au clic
-                layer.bindPopup(
-                    "<b>Commune :</b> " + nomCommune + 
-                    "<br><b>Status :</b> " + infoRobot
-                );
-            }
+    <script>
+        // 2. Initialiser la carte (Centrée sur la France par défaut)
+        var map = L.map('map').setView([46.6, 2.2], 6);
+
+        // 3. Ajouter un fond de carte (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
         }).addTo(map);
-    })
-    .catch(err => {
-        console.error("Erreur de chargement :", err);
-    });
+
+        // 4. Ton script de fetch (inchangé mais placé ici)
+        fetch('resultat.geojson') 
+            .then(res => {
+                if (!res.ok) throw new Error("Fichier resultat.geojson introuvable");
+                return res.json();
+            })
+            .then(data => {
+                L.geoJSON(data, {
+                    style: { color: "#2c3e50", weight: 1, fillColor: "#3498db", fillOpacity: 0.4 },
+                    onEachFeature: function (feature, layer) {
+                        let nomCommune = feature.properties.NOM || "Nom inconnu";
+                        let infoRobot = feature.properties.status_robot || "En attente...";
+                        layer.bindPopup("<b>Commune :</b> " + nomCommune + "<br><b>Status :</b> " + infoRobot);
+                    }
+                }).addTo(map);
+            })
+            .catch(err => console.error("Erreur :", err));
+    </script>
+</body>
+</html>
