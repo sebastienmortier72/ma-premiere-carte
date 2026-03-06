@@ -2,49 +2,120 @@
 <html>
 <head>
     <title>Ma Carte des Communes</title>
+    <meta charset="utf-8" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        #map { height: 600px; width: 100%; }
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        #map { height: 100vh; width: 100%; }
+
+        /* Style de la barre de recherche */
+        .search-container {
+            position: absolute;
+            top: 20px;
+            left: 50px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 5px;
+        }
+        input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 200px; }
+        button { padding: 8px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #2980b9; }
     </style>
 </head>
 <body>
+
+    <div class="search-container">
+        <input type="text" id="search-input" list="communes-list" placeholder="Nom de la commune...">
+        <datalist id="communes-list"></datalist>
+        <button onclick="chercherCommune()">Rechercher</button>
+    </div>
+
     <div id="map"></div>
 
     <script>
-        // 2. Initialiser la carte (Centrée sur la France par défaut)
+        // 1. Initialisation de la carte
         var map = L.map('map').setView([46.6, 2.2], 6);
 
-        // 3. Ajouter un fond de carte (OpenStreetMap)
+        // 2. Fond de carte
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // 4. Ton script de fetch (inchangé mais placé ici)
+        let coucheCommunes; // On la déclare ici pour qu'elle soit accessible partout
+
+        // 3. Chargement des données
         fetch('resultat.geojson') 
             .then(res => {
                 if (!res.ok) throw new Error("Fichier resultat.geojson introuvable");
                 return res.json();
             })
             .then(data => {
-        var coucheCommunes = L.geoJSON(data, {
-            style: {
-                color: "#2c3e50",
-                weight: 1,
-                fillColor: "#3498db",
-                fillOpacity: 0.4
-            },
-            onEachFeature: function (feature, layer) {
-                let nomCommune = feature.properties.NOM || "Nom inconnu";
-                let infoRobot = feature.properties.status_robot || "En attente...";
-                layer.bindPopup("<b>Commune :</b> " + nomCommune + "<br><b>Status :</b> " + infoRobot);
-            }
-        }).addTo(map);
+                const liste = document.getElementById('communes-list');
 
-        // AJOUTE CECI : La carte s'ajuste toute seule aux communes
-        map.fitBounds(coucheCommunes.getBounds());
-    })
+                coucheCommunes = L.geoJSON(data, {
+                    style: {
+                        color: "#2c3e50",
+                        weight: 1,
+                        fillColor: "#3498db",
+                        fillOpacity: 0.4
+                    },
+                    onEachFeature: function (feature, layer) {
+                        let nom = feature.properties.NOM || "Inconnu";
+                        let status = feature.properties.status_robot || "Non traité";
+                        
+                        layer.bindPopup("<b>Commune :</b> " + nom + "<br><b>Status :</b> " + status);
+
+                        // On remplit la liste d'autocomplétion
+                        let option = document.createElement('option');
+                        option.value = nom;
+                        liste.appendChild(option);
+                    }
+                }).addTo(map);
+
+                // Zoom automatique sur les données
+                if (data.features.length > 0) {
+                    map.fitBounds(coucheCommunes.getBounds());
+                }
+            })
             .catch(err => console.error("Erreur :", err));
+
+        // 4. Fonction de recherche
+        function chercherCommune() {
+            let saisie = document.getElementById('search-input').value.toUpperCase().trim();
+            let trouve = false;
+
+            if (!coucheCommunes) return;
+
+            coucheCommunes.eachLayer(function(layer) {
+                // On remet le style normal à chaque recherche
+                coucheCommunes.resetStyle(layer);
+
+                let nomDansData = (layer.feature.properties.NOM || "").toUpperCase();
+
+                if (nomDansData === saisie && saisie !== "") {
+                    trouve = true;
+                    // Change la couleur en ORANGE si trouvé
+                    layer.setStyle({
+                        fillColor: "#f39c12",
+                        fillOpacity: 0.8,
+                        color: "#e67e22",
+                        weight: 3
+                    });
+                    // Zoom et affiche l'étiquette
+                    map.fitBounds(layer.getBounds());
+                    layer.openPopup();
+                }
+            });
+
+            if (!trouve && saisie !== "") {
+                alert("Commune '" + saisie + "' non trouvée.");
+            }
+        }
     </script>
 </body>
 </html>
